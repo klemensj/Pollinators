@@ -1,12 +1,12 @@
 extensions [ gis ]
 
-globals [landuse 
+globals [landuse
          greenroof-percent]
 
 patches-own[land]
 
 breed [bugs bug]  ;; turtles representing our species of interest
-bugs-own[steps green-steps gray-steps] 
+bugs-own[steps green-steps gray-steps]
 breed [targets target]
 
 to load-gis
@@ -17,17 +17,13 @@ to load-gis
 end
 
 to data-out
-  
+
      file-open data-filename
-     file-print data-header
-     file-print (word "vision-width: " vision-width)
-     file-print (word "vision-distance: " vision-distance)
-     file-print (word "greenroof-percent: " greenroof-percent)
-     file-print "gray-steps green-steps steps"
+     file-print "data-filename data-header greenroof-percent vision-width vision-distance gray-steps green-steps steps"
      file-close
-  
+
 end
-     
+
 to setup
 
   ask patches [
@@ -55,9 +51,9 @@ set-default-shape bugs "butterfly"
     set gray-steps 0
   ]
   ]
-  
+
   calculate-percent ;; reset percent greenroof calculator at end of setup
-  
+
   reset-ticks
 
 end
@@ -82,15 +78,21 @@ to move-bug
     if pxcor = min-pxcor [
       file-open data-filename
       print data-filename
+      file-type data-filename
+      file-type " "
+      file-type  data-header
+      file-write vision-width
+      file-write vision-distance
+      file-write greenroof-percent
       file-write gray-steps
       file-write green-steps
       file-write steps
-      FILE-TYPE "\n" 
+      file-type "\n"
       file-close
       ]
-    
-    if pxcor = min-pxcor [die]               
-  
+
+    if pxcor = min-pxcor [die]
+
     set heading 270
     pen-down
     let green_target nobody
@@ -99,25 +101,25 @@ to move-bug
     if count green_target > 0 [face min-one-of green_target [vision-distance]]
     forward 1
              ]
-    
+
 end
 
 to draw-greenroof ;; This prodcedure allows you to color certain black roofs green
- 
+
   if mouse-down? [
-        ask patch round mouse-xcor round mouse-ycor 
+        ask patch round mouse-xcor round mouse-ycor
             [
-            set pcolor green 
+            set pcolor green
             ask patches in-radius paint-radius [if pcolor = black [set pcolor green] ]
              ]
              ]
 end
 
 to calculate-percent         ;; This procedure calculates the % greenroof to display in the monitor window on button push
- 
+
   let roofs patches with [land = 5]
   let roof-number count roofs
-  let roofs-number count patches with [land = 5] 
+  let roofs-number count patches with [land = 5]
   let greenroofs-number count roofs with [pcolor = green]
   set greenroof-percent  greenroofs-number / roofs-number
 end
@@ -125,19 +127,19 @@ end
 to count-steps
   set steps steps + 1
   ifelse land = 1 [set green-steps green-steps + 1][set gray-steps gray-steps + 1]
- 
+
 end
 
 to paint-guide
- 
-set-default-shape targets "target" 
+
+set-default-shape targets "target"
 ask one-of patches with [ pcolor = black ] [
   sprout-targets 1
    [
     set breed targets
     set color white
     set size 20
-  
+
   ]]
 end
 
@@ -255,7 +257,7 @@ vision-distance
 vision-distance
 0
 100
-10
+6
 1
 1
 NIL
@@ -338,7 +340,7 @@ INPUTBOX
 198
 182
 data-filename
-dwight
+test2
 1
 0
 String
@@ -349,7 +351,7 @@ INPUTBOX
 194
 241
 data-header
-with painty turtles now
+blue
 1
 0
 String
@@ -731,7 +733,7 @@ Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 
 @#$#@#$#@
-NetLogo 5.1.0
+NetLogo 5.3.1
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
