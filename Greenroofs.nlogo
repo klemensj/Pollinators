@@ -53,8 +53,6 @@ set-default-shape bugs "butterfly"
   ]
   ]
 
-;;  calculate-percent ;; reset percent greenroof calculator at end of setup
- ;; random-greenroof
   reset-ticks
 
 end
@@ -135,11 +133,8 @@ end
 to Random-Greenroof
 
 
-  let radius 10
-
 while[ greenroof-percent < Greenroof_Target_%]
 [
-  print "what what I'm in the loop"
   ask one-of patches with [ pcolor = black ] [
             set pcolor green
             ask patches in-radius paint-radius [if pcolor = black [set pcolor green] ]
@@ -262,7 +257,7 @@ vision-width
 vision-width
 1
 179
-121
+120
 1
 1
 NIL
@@ -277,7 +272,7 @@ vision-distance
 vision-distance
 0
 100
-7
+16
 1
 1
 NIL
@@ -337,7 +332,7 @@ paint-radius
 paint-radius
 1
 20
-20
+19
 1
 1
 NIL
@@ -416,7 +411,7 @@ INPUTBOX
 163
 689
 Greenroof_Target_%
-0.15
+0.05
 1
 0
 Number
