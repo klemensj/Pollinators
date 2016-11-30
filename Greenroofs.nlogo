@@ -1,7 +1,8 @@
 extensions [ gis ]
 
 globals [landuse
-         greenroof-percent]
+         greenroof-percent
+         ]
 
 patches-own[land]
 
@@ -52,8 +53,8 @@ set-default-shape bugs "butterfly"
   ]
   ]
 
-  calculate-percent ;; reset percent greenroof calculator at end of setup
-
+;;  calculate-percent ;; reset percent greenroof calculator at end of setup
+ ;; random-greenroof
   reset-ticks
 
 end
@@ -65,6 +66,7 @@ end
 
 to go
  calculate-percent ;; make sure this number is up to date before writing header to file
+ random-greenroof
  data-out
  while [count bugs > 0]
 [ move-bug ]
@@ -127,6 +129,24 @@ end
 to count-steps
   set steps steps + 1
   ifelse land = 1 [set green-steps green-steps + 1][set gray-steps gray-steps + 1]
+
+end
+
+to Random-Greenroof
+
+
+  let radius 10
+
+while[ greenroof-percent < Greenroof_Target_%]
+[
+  print "what what I'm in the loop"
+  ask one-of patches with [ pcolor = black ] [
+            set pcolor green
+            ask patches in-radius paint-radius [if pcolor = black [set pcolor green] ]
+             ]
+
+ calculate-percent
+    ]
 
 end
 
@@ -242,7 +262,7 @@ vision-width
 vision-width
 1
 179
-120
+121
 1
 1
 NIL
@@ -257,7 +277,7 @@ vision-distance
 vision-distance
 0
 100
-6
+7
 1
 1
 NIL
@@ -317,7 +337,7 @@ paint-radius
 paint-radius
 1
 20
-11
+20
 1
 1
 NIL
@@ -389,6 +409,17 @@ NIL
 NIL
 NIL
 1
+
+INPUTBOX
+8
+629
+163
+689
+Greenroof_Target_%
+0.15
+1
+0
+Number
 
 @#$#@#$#@
 ## WHAT IS IT?
