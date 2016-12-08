@@ -20,7 +20,7 @@ end
 to data-out
 
      file-open data-filename
-     file-print "data-filename data-header greenroof-percent vision-width vision-distance gray-steps green-steps steps"
+     file-print "data-filename data-header  vision-width vision-distance greenroof-percent gray-steps green-steps steps"
      file-close
 
 end
@@ -272,7 +272,7 @@ vision-distance
 vision-distance
 0
 100
-16
+11
 1
 1
 NIL
