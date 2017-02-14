@@ -20,7 +20,7 @@ end
 to data-out
 
      file-open data-filename
-     file-print "data-filename data-header  vision-width vision-distance greenroof-percent gray-steps green-steps steps"
+     file-print "data-filename data-header greenroof-percent vision-width vision-distance gray-steps green-steps steps"
      file-close
 
 end
@@ -53,6 +53,8 @@ set-default-shape bugs "butterfly"
   ]
   ]
 
+;;  calculate-percent ;; reset percent greenroof calculator at end of setup
+ ;; random-greenroof
   reset-ticks
 
 end
@@ -77,7 +79,6 @@ to move-bug
     count-steps
     if pxcor = min-pxcor [
       file-open data-filename
-      print data-filename
       file-type data-filename
       file-type " "
       file-type  data-header
@@ -98,7 +99,7 @@ to move-bug
     let green_target nobody
     let perceived_patches patches in-cone vision-distance vision-width
     set green_target perceived_patches with [ pcolor = green ]
-    if count green_target > 0 [face min-one-of green_target [vision-distance]]
+    ifelse count green_target > 0 [face min-one-of green_target [vision-distance]][face min-one-of perceived_patches [vision-distance]] ;; added equivalent jitter to non-green squares
     forward 1
              ]
 
@@ -121,6 +122,7 @@ to calculate-percent         ;; This procedure calculates the % greenroof to dis
   let roof-number count roofs
   let roofs-number count patches with [land = 5]
   let greenroofs-number count roofs with [pcolor = green]
+  if roof-number = 0 [set roofs-number 1]                  ;; added this line of code to present divide by 0 error
   set greenroof-percent  greenroofs-number / roofs-number
 end
 
@@ -132,6 +134,8 @@ end
 
 to Random-Greenroof
 
+
+  let radius 10
 
 while[ greenroof-percent < Greenroof_Target_%]
 [
@@ -171,9 +175,9 @@ end
 ;; 5 = Buildings
 @#$#@#$#@
 GRAPHICS-WINDOW
-196
+205
 10
-1207
+1216
 1042
 500
 500
@@ -272,7 +276,7 @@ vision-distance
 vision-distance
 0
 100
-11
+20
 1
 1
 NIL
@@ -332,7 +336,7 @@ paint-radius
 paint-radius
 1
 20
-19
+1
 1
 1
 NIL
@@ -344,7 +348,7 @@ INPUTBOX
 196
 70
 asc-filename
-aoi1_5cat.asc
+testcircle.asc
 1
 0
 String
@@ -411,7 +415,7 @@ INPUTBOX
 163
 689
 Greenroof_Target_%
-0.05
+0
 1
 0
 Number
