@@ -1,6 +1,7 @@
 extensions [ gis ]
 
 globals [landuse
+         green-percent
          greenroof-percent
          ]
 
@@ -20,7 +21,7 @@ end
 to data-out
 
      file-open data-filename
-     file-print "data-filename data-header greenroof-percent vision-width vision-distance gray-steps green-steps steps"
+     file-print "asc-filename data-filename data-header green-proportion greenroof-proportion vision-width vision-distance gray-steps green-steps steps"
      file-close
 
 end
@@ -40,7 +41,7 @@ to setup
 set-default-shape bugs "butterfly"
   clear-turtles
   clear-drawing
-  while[count bugs < 100]   ;; until we have 100 bugs
+  while[count bugs < bug-number]   ;; until we have 100 bugs
   [
   create-bugs 1  ;; create the insects
   [
@@ -53,8 +54,8 @@ set-default-shape bugs "butterfly"
   ]
   ]
 
-;;  calculate-percent ;; reset percent greenroof calculator at end of setup
- ;; random-greenroof
+  calculate-percent-roofs-green
+  calculate-percent-green
   reset-ticks
 
 end
@@ -65,7 +66,7 @@ end
 
 
 to go
- calculate-percent ;; make sure this number is up to date before writing header to file
+ calculate-percent-roofs-green ;; make sure this number is up to date before writing header to file
  random-greenroof
  data-out
  while [count bugs > 0]
@@ -79,11 +80,14 @@ to move-bug
     count-steps
     if pxcor = min-pxcor [
       file-open data-filename
+      file-type asc-filename
+      file-type " "
       file-type data-filename
       file-type " "
       file-type  data-header
       file-write vision-width
       file-write vision-distance
+      file-write green-percent
       file-write greenroof-percent
       file-write gray-steps
       file-write green-steps
@@ -98,10 +102,15 @@ to move-bug
     pen-down
     let green_target nobody
     let perceived_patches patches in-cone vision-distance vision-width
-    set green_target perceived_patches with [ pcolor = green ]
-    ifelse count green_target > 0 [face min-one-of green_target [vision-distance]][face min-one-of perceived_patches [vision-distance]] ;; added equivalent jitter to non-green squares
-    forward 1
-             ]
+    let patch-under-me patch-here
+    set green_target perceived_patches with [ pcolor = green and self != patch-under-me]
+    ifelse  count green_target != 0 [
+          let target min-one-of green_target[ distance myself ]
+          let target_heading towards target
+          move-to patch-at-heading-and-distance target_heading 1 ]
+          [ fd 1]
+
+     ]
 
 end
 
@@ -112,11 +121,18 @@ to draw-greenroof ;; This prodcedure allows you to color certain black roofs gre
             [
             set pcolor green
             ask patches in-radius paint-radius [if pcolor = black [set pcolor green] ]
+            calculate-percent-roofs-green
              ]
              ]
 end
 
-to calculate-percent         ;; This procedure calculates the % greenroof to display in the monitor window on button push
+to calculate-percent-green ;; This calculates green percentage of all patches at setup, before any roof painting
+  let all-patches count patches
+  let green-patches count patches with [pcolor = green]
+  set green-percent green-patches / all-patches
+end
+
+to calculate-percent-roofs-green         ;; This procedure calculates the % greenroof to display in the monitor window on button push
 
   let roofs patches with [land = 5]
   let roof-number count roofs
@@ -133,20 +149,16 @@ to count-steps
 end
 
 to Random-Greenroof
+  let radius paint-radius
 
-
-  let radius 10
-
-while[ greenroof-percent < Greenroof_Target_%]
-[
-  ask one-of patches with [ pcolor = black ] [
-            set pcolor green
-            ask patches in-radius paint-radius [if pcolor = black [set pcolor green] ]
-             ]
-
- calculate-percent
+   while[ greenroof-percent < Greenroof_Target_Proportion]
+    [
+      ask one-of patches with [ pcolor = black ] [
+      set pcolor green
+      ask patches in-radius paint-radius [if pcolor = black [set pcolor green] ]
+     ]
+ calculate-percent-roofs-green
     ]
-
 end
 
 to paint-guide
@@ -219,10 +231,10 @@ NIL
 1
 
 BUTTON
-59
-259
-125
-292
+115
+238
+181
+271
 NIL
 setup
 NIL
@@ -236,10 +248,10 @@ NIL
 1
 
 BUTTON
-32
-301
-151
-334
+35
+584
+154
+617
 Run the Model
 go
 NIL
@@ -253,10 +265,10 @@ NIL
 1
 
 SLIDER
-9
-354
-181
-387
+10
+290
+182
+323
 vision-width
 vision-width
 1
@@ -268,25 +280,25 @@ NIL
 HORIZONTAL
 
 SLIDER
-9
-388
-181
-421
+10
+324
+182
+357
 vision-distance
 vision-distance
 0
 100
-20
+10
 1
 1
 NIL
 HORIZONTAL
 
 MONITOR
-65
-546
-184
-591
+19
+489
+174
+534
 prop roofs green
 greenroof-percent
 5
@@ -294,28 +306,11 @@ greenroof-percent
 11
 
 BUTTON
-7
-545
-62
-591
-Calc
-calculate-percent\n
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
 8
-508
+633
 184
-541
-Draw greenroofs with mouse
+666
+Draw greenroofs manually
 draw-greenroof
 T
 1
@@ -328,15 +323,15 @@ NIL
 1
 
 SLIDER
-8
-474
-184
-507
+19
+359
+174
+392
 paint-radius
 paint-radius
 1
 20
-1
+10
 1
 1
 NIL
@@ -348,38 +343,38 @@ INPUTBOX
 196
 70
 asc-filename
-testcircle.asc
+AOI_2595_rand1.asc
 1
 0
 String
 
 INPUTBOX
--3
-122
-198
-182
+-2
+106
+199
+166
 data-filename
-test2
+datafile
 1
 0
 String
 
 INPUTBOX
--3
-181
-194
-241
+-2
+166
+195
+226
 data-header
-blue
+no_spaces
 1
 0
 String
 
 BUTTON
-7
-594
-126
-627
+8
+667
+107
+700
 click for guide
 paint-guide
 NIL
@@ -393,11 +388,11 @@ NIL
 1
 
 BUTTON
-130
-594
-185
-630
-clear
+108
+667
+184
+700
+clear guides
 clear-targets
 NIL
 1
@@ -410,15 +405,54 @@ NIL
 1
 
 INPUTBOX
-8
-629
-163
-689
-Greenroof_Target_%
+19
+394
+174
+454
+Greenroof_Target_Proportion
 0
 1
 0
 Number
+
+BUTTON
+19
+455
+174
+488
+Set Random Greenroofs
+Random-Greenroof
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+INPUTBOX
+9
+228
+94
+288
+bug-number
+100
+1
+0
+Number
+
+MONITOR
+19
+534
+174
+579
+Prop patches green
+green-percent
+5
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
