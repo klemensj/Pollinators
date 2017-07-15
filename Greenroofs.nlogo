@@ -3,6 +3,7 @@ extensions [ gis ]
 globals [landuse
          green-percent
          greenroof-percent
+         init-green-percent
          ]
 
 patches-own[land]
@@ -21,7 +22,7 @@ end
 to data-out
 
      file-open data-filename
-     file-print "asc-filename data-filename data-header green-proportion greenroof-proportion vision-width vision-distance gray-steps green-steps steps"
+     file-print "asc-filename data-filename data-header vision-width vision-distance init-green-proportion green-proportion greenroof-proportion gray-steps green-steps steps paint-radius"
      file-close
 
 end
@@ -29,13 +30,14 @@ end
 to setup
 
   ask patches [
-    ifelse land = 1 [ set pcolor green  ] [            ;; trees
-      ifelse land = 2 [set pcolor yellow][             ;; grass
+    ifelse land = 0 [ set pcolor cyan  ] [            ;; park
+      ifelse land = 1 [ set pcolor green  ] [            ;; trees
+        ifelse land = 2 [set pcolor yellow][             ;; grass
               ifelse land = 3 [set pcolor gray][       ;; road
                 ifelse land = 4 [set pcolor blue][     ;; water
                   ifelse land = 5 [set pcolor black][  ;; roofs
       set pcolor brown
-    ]]]]]
+    ]]]]]]
   ]
 
 set-default-shape bugs "butterfly"
@@ -56,6 +58,7 @@ set-default-shape bugs "butterfly"
 
   calculate-percent-roofs-green
   calculate-percent-green
+  set init-green-percent green-percent
   reset-ticks
 
 end
@@ -87,11 +90,13 @@ to move-bug
       file-type  data-header
       file-write vision-width
       file-write vision-distance
+      file-write init-green-percent
       file-write green-percent
       file-write greenroof-percent
       file-write gray-steps
       file-write green-steps
       file-write steps
+      file-write paint-radius         ;; added this but only for analyzing blobs
       file-type "\n"
       file-close
       ]
@@ -103,7 +108,7 @@ to move-bug
     let green_target nobody
     let perceived_patches patches in-cone vision-distance vision-width
     let patch-under-me patch-here
-    set green_target perceived_patches with [ pcolor = green and self != patch-under-me]
+    set green_target perceived_patches with [ (pcolor = green and self != patch-under-me) or (pcolor = cyan and self != patch-under-me)]
     ifelse  count green_target != 0 [
           let target min-one-of green_target[ distance myself ]
           let target_heading towards target
@@ -144,7 +149,7 @@ end
 
 to count-steps
   set steps steps + 1
-  ifelse land = 1 [set green-steps green-steps + 1][set gray-steps gray-steps + 1]
+  ifelse pcolor = green [set green-steps green-steps + 1][set gray-steps gray-steps + 1] ;;Does not currently account for CYAN Park squares
 
 end
 
@@ -158,6 +163,7 @@ to Random-Greenroof
       ask patches in-radius paint-radius [if pcolor = black [set pcolor green] ]
      ]
  calculate-percent-roofs-green
+ calculate-percent-green
     ]
 end
 
@@ -288,7 +294,7 @@ vision-distance
 vision-distance
 0
 100
-10
+20
 1
 1
 NIL
@@ -330,8 +336,8 @@ SLIDER
 paint-radius
 paint-radius
 1
-20
-10
+104
+15
 1
 1
 NIL
@@ -343,7 +349,7 @@ INPUTBOX
 196
 70
 asc-filename
-AOI_2595_rand1.asc
+AOI_rand_185.asc
 1
 0
 String
@@ -354,7 +360,7 @@ INPUTBOX
 199
 166
 data-filename
-datafile
+AOI_115to185
 1
 0
 String
@@ -365,7 +371,7 @@ INPUTBOX
 195
 226
 data-header
-no_spaces
+BSpace
 1
 0
 String
@@ -410,7 +416,7 @@ INPUTBOX
 174
 454
 Greenroof_Target_Proportion
-0
+0.5
 1
 0
 Number
@@ -438,7 +444,7 @@ INPUTBOX
 94
 288
 bug-number
-100
+200
 1
 0
 Number
@@ -456,22 +462,48 @@ green-percent
 
 @#$#@#$#@
 ## WHAT IS IT?
+This model explores how does the geometry of urban environments affect the movement patterns of hypothetical organisms.
 
-(a general understanding of what the model is trying to show or explain)
+WHYYYYY????
+
 
 ## HOW IT WORKS
+There are two main components to this model. The first component focuses on the movement and behavior of hypothetical organisms. Butterflies represent organisms migrating through an urban area. Movement rules for the butterflies were coded as follows; the butterflies are to go west unless they see a green patch. The vision width and the vision distance can be varfied depending on the experiment. If two patches are equidistant, the butterflies choose at random.  When they spot a favorable patch in their cone of vision they are to change their heading to the closest green patch. Each butterfly records WRITES TO A FILEthe number of steps it is taking on favorable (green) vs unfavorable (every other color) as it moves through the area of interest. The data file is created and saved as a text file which can be used for analysis.
 
-(what rules the agents use to create the overall behavior of the model)
+The model was one of simple favorability designation. Tree and shrub cover in the model represented favorable habitat and were coded green. All other land cover types were assumed to be unfavorable habitat. We started with a landuse and building footprint map of Philadelphia at a 1 foot scale.
+
+The second component revolves around the manipulation of these areas of interest (AOI). You are able to set the paint brush size and overall percentage of green to add to the buildings which are represented by black in the AOI in order to montior how they change the number of steps these organisms take in favorable vs. unfavorable habitats.
 
 ## HOW TO USE IT
 
-(how to use the model, including a description of each of the items in the Interface tab)
+1) Load GIS
+- type the name of your GIS date file into the "asc-filename" box in the top. All GIS file names should be in "filename.asc" format. Then hit load-GIS button.
+
+2) Create data file name.
+- Type data file name in to the "data-filename" box. This is the name of the file where all of the step data will be sent for each run.
+
+3) Create data header
+-Type the data header name into the "data-header" box. This is important to help differentiate runs from one another for analysis.
+
+4) Number of bugs
+-Change the number of bugs you are running through the simulaiton. Type the desired number of bug into the "bug number" box.
+
+5) Hit setup
+- Designated GIS file will load on the screen.
+
+6) Change variables and Set Random Greenroofs
+- Here you can change vision width, vision distance, paint radius and target green roof percent with the sliders and boxes depending on what you are trying to study.
+
+7) Run the model
+- The moment you have been waiting for. Hit the run the model button to start the simulation. Once it ends ss
+
+* Data file will be save din the same folder as the this netlogo model. GIS AOIs need to be in the same folder as the netlogo model
 
 ## THINGS TO NOTICE
 
 (suggested things for the user to notice while running the model)
 
-## THINGS TO TRY
+## THINGS TO TRYs
 
 (suggested things for the user to try to do (move sliders, switches, etc.) with the model)
 
@@ -479,9 +511,17 @@ green-percent
 
 (suggested things to add or change in the Code tab to make the model more complicated, detailed, accurate, etc.)
 
+Making different patch categories on the landscape have different behaviors, e.g. animals don't move through buildings.
+
+Adding building height to footprint.
+
 ## NETLOGO FEATURES
 
 (interesting or unusual features of NetLogo that the model uses, particularly in the Code tab; or where workarounds were needed for missing features)
+
+Takes in GIS file in .asc format to create landscape.
+
+Writes to file for each turtle
 
 ## RELATED MODELS
 
@@ -490,6 +530,8 @@ green-percent
 ## CREDITS AND REFERENCES
 
 (a reference to the model's URL on the web if it has one, as well as any other necessary credits, citations, and links)
+
+GITHUB ADDRESS FOR THE MODEL
 @#$#@#$#@
 default
 true
@@ -801,6 +843,161 @@ NetLogo 5.3.1
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
+<experiments>
+  <experiment name="blobs" repetitions="5" runMetricsEveryStep="true">
+    <setup>load-GIS
+setup
+Random-Greenroof</setup>
+    <go>go</go>
+    <enumeratedValueSet variable="Greenroof_Target_Proportion">
+      <value value="0.11"/>
+      <value value="0.17"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="bug-number">
+      <value value="100"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="data-header">
+      <value value="&quot;Blob&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="vision-distance">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="asc-filename">
+      <value value="&quot;Black.asc&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="vision-width">
+      <value value="120"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="paint-radius">
+      <value value="104"/>
+      <value value="84"/>
+      <value value="56"/>
+      <value value="28"/>
+      <value value="20"/>
+      <value value="14"/>
+      <value value="10"/>
+      <value value="7"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="data-filename">
+      <value value="&quot;rvss_blobs&quot;"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="blobs2" repetitions="5" runMetricsEveryStep="true">
+    <setup>setup
+Random-Greenroof</setup>
+    <go>go</go>
+    <enumeratedValueSet variable="Greenroof_Target_Proportion">
+      <value value="0.11"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="bug-number">
+      <value value="100"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="data-header">
+      <value value="&quot;Blob&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="vision-distance">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="asc-filename">
+      <value value="&quot;Black.asc&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="vision-width">
+      <value value="120"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="paint-radius">
+      <value value="10"/>
+      <value value="7"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="data-filename">
+      <value value="&quot;rvss_blobs&quot;"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="blobs17" repetitions="5" runMetricsEveryStep="true">
+    <setup>setup
+Random-Greenroof</setup>
+    <go>go</go>
+    <enumeratedValueSet variable="Greenroof_Target_Proportion">
+      <value value="0.17"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="bug-number">
+      <value value="100"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="data-header">
+      <value value="&quot;Blob&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="vision-distance">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="asc-filename">
+      <value value="&quot;Black.asc&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="vision-width">
+      <value value="120"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="paint-radius">
+      <value value="104"/>
+      <value value="56"/>
+      <value value="28"/>
+      <value value="20"/>
+      <value value="14"/>
+      <value value="10"/>
+      <value value="7"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="data-filename">
+      <value value="&quot;rvss_blobs&quot;"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="Sweep_greenroof_percent_vision_distance_" repetitions="1" runMetricsEveryStep="true">
+    <setup>load-GIS
+setup</setup>
+    <go>go</go>
+    <enumeratedValueSet variable="vision-width">
+      <value value="120"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="vision-distance">
+      <value value="1"/>
+      <value value="10"/>
+      <value value="20"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="Greenroof_Target_Proportion">
+      <value value="0"/>
+      <value value="0.05"/>
+      <value value="0.1"/>
+      <value value="0.15"/>
+      <value value="0.2"/>
+      <value value="0.25"/>
+      <value value="0.3"/>
+      <value value="0.35"/>
+      <value value="0.4"/>
+      <value value="0.45"/>
+      <value value="0.5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="paint-radius">
+      <value value="15"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="data-filename">
+      <value value="&quot;AOI_115to185&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="bug-number">
+      <value value="200"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="asc-filename">
+      <value value="&quot;AOI_rand_115.asc&quot;"/>
+      <value value="&quot;AOI_rand_125.asc&quot;"/>
+      <value value="&quot;AOI_rand_127.asc&quot;"/>
+      <value value="&quot;AOI_rand_129.asc&quot;"/>
+      <value value="&quot;AOI_rand_130.asc&quot;"/>
+      <value value="&quot;AOI_rand_153.asc&quot;"/>
+      <value value="&quot;AOI_rand_156.asc&quot;"/>
+      <value value="&quot;AOI_rand_172.asc&quot;"/>
+      <value value="&quot;AOI_rand_173.asc&quot;"/>
+      <value value="&quot;AOI_rand_185.asc&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="data-header">
+      <value value="&quot;BSpace&quot;"/>
+    </enumeratedValueSet>
+  </experiment>
+</experiments>
 @#$#@#$#@
 @#$#@#$#@
 default
